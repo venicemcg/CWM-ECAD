@@ -31,18 +31,12 @@ module blinds(
     );
     
     wire   out;
+    wire [3:0] ab = {a,b};
     assign 
-      if (a && b = 0)
-         out = func[0];
-    assign
-      if (a = 0 && b = 1) 
-         out = func[1];
-    assign
-      if (a = 1 && b = 0) 
-         out = func[2];
-    assign 
-      if (a && b = 1) 
-         out = func[3];
+      out = (ab==4'b00)?func[0]:
+      (ab==4'b01)?func[1]:
+      (ab==4'b10)?func[2]:
+      func[3];
      
 
 endmodule
