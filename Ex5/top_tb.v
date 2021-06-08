@@ -75,6 +75,11 @@ module top_tb();
   end 
   
   // Instantiating ac top 
-  ac top(clk, temp, heat, cool); 
+  ac top(
+    .clk(clk), 
+    .temp(temp), 
+    .heat(heat), 
+    .cool(cool)
+  ); 
   
 endmodule 
