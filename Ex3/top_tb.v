@@ -23,8 +23,8 @@ reg change;
 reg on_off; 
 reg err; 
 
-reg [7:0] counter_out; 
-reg [7:0] counter_out_prev; 
+wire [7:0] counter_out; 
+    reg [7:0] local_counter; 
 
 //Todo: Clock generation
 initial 
@@ -40,68 +40,38 @@ initial begin
    rst = 1; 
    on_off = 1; 
    change = 0; 
-   err = 0; 
+   err = 0;
+   clk = 0; 
+   local_counter = 0; 
 
-   forever begin 
-   // First test to check that counter = 0 when rst = 1
-      #(CLK_PERIOD)
-      if ( (rst==1) && (counter_out==1) ) 
-      begin
-         $display("***TEST FAILED*** counter_out = 1 when rst = 1);
-         err = 1; 
-      end 
-   // Next test that counter doesn't change when change = 0 and rst = 0 
-   #(2*CLK_PERIOD)
-   rst = 0; 
-   counter_out_prev = counter_out; 
-   #(CLK_PERIOD)
-   if ( (change==0) && (counter_out_prev!=counter_out) ) 
-   begin 
-      $display("***TEST FAILED*** counter is counting when change = 0");
-      err = 1; 
-   end 
-
-   // Next test to check counter counts up when change = 1 and on_off = 1
-   #(2*CLK_PERIOD)
-   change = 1; 
-   #(2*CLK_PERIOD)
-      counter_out_prev = counter_out; 
-      #(CLK_PERIOD)
-   if ( (on_off==1) && (counter_out!=counter_out_prev + 1) )
-   begin 
-      $display("***TEST FAILED*** counter failed to count up when on_off = 1"); 
-      err = 1; 
-   end 
-
-   // Finally test to check counter counts down when change = 1 and on_off = 0 
-   #(2*CLK_PERIOD)
-   on_off = 0; 
-   #(2*CLK_PERIOD) 
-      counter_out_prev = counter_out; 
-      #(CLK_PERIOD)
-   if ( (on_off==0) && (counter_out!=counter_out_prev - 1) ) 
-   begin 
-      $display("***TEST FAILED*** counter failed to count down when on_off = 0"); 
-      err = 1; 
-   end 
-   end 
+    #10 if (counter_out != 0)
+        begin err = 1;
+        end
+    rst = 0; // Now test for change = 0 
+    #20 if (counter_out != 0) 
+        begin err = 1; 
+        end 
+    // Testing for change = 1
+    change = 1;
+    forever
+        begin 
+            #(CLK_PERIOD*2)
+            local_counter = on_off?local_counter+1:local_counter-1;
+            if (local_counter!=counter_out)
+                begin 
+                    err = 1; 
+                end 
+        end
+    // Finish test, check for success
+    if (err==0) begin 
+        $display("TEST PASSED"); 
+        $finish; 
+    end 
+    if (err==1) begin 
+        $display("TEST FAILED"); 
+        $finish 
+    end 
 end 
-    
-//Todo: Finish test, check for success
-initial begin 
-   #100 
-   if (err==0)
-      $display("***TEST PASSED***"); 
-   $finish; 
-end  
-   
-
-//Todo: Instantiate counter module
-monitor top(
-.clk(clk), 
-.rst(rst), 
-.change(change), 
-.on_off(on_off), 
-.counter_out(counter_out)
-); 
+    //Instantiate monitor module 
+    monitor top(clk. rst, change, on_off, counter_out); 
 endmodule 
