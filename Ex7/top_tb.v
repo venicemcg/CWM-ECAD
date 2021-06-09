@@ -86,5 +86,11 @@ module top_tb();
   end
   
   // instantiating selector top
-  selector top(clk, sel, rst, button, light); 
+  selector top( 
+  .clk(clk), 
+  .sel(sel), 
+  .rst(rst),
+  .button(button), 
+  .light(light)
+  );
 endmodule 
