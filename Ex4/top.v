@@ -16,32 +16,29 @@
 //  You need to write the whole file.
 //////////////////////////////////////////////////////////////////////////////////
 
-`timescale 1ns / 100ps
+`timescale 1ns / 100ps 
 
 module LED(
-   // Add the inputs and outputs of the function
-   input clk, 
+   // Add the inputs and outputs
+   input clk,
    input rst, 
    input button, 
-   output reg [2:0] colour 
-   ); 
-
-   always @(posedge clk or posedge rst) begin 
-    
-      if (rst == 1)
-         colour <= 'b001;
-      else if (colour == 'b000 || colour == 'b111)
-         colour <= 'b001; 
-      else if (button == 1) begin 
-         case (colour)
-            1 : colour <= 2;
-            2 : colour <= 3; 
-            3 : colour <= 4;
-            4 : colour <= 5; 
-            5 : colour <= 6; 
-            6 : colour <= 1; 
-            default : colour <= 1;
-         endcase:
-      end
+   output reg[2:0]colour
+); 
+   
+   initial begin 
+      colour = 3'b001; 
    end
-endmodule
+   
+   always @(posedge clk)
+      begin 
+         if ((button == 0 || button == 1 ) && (colour == 3'b111 || colour == 3'b000))
+            colour = 3'b001; 
+         else if (button == 0)
+            colour = colour; 
+         else if ((button == 1) && (colour != 3'b111) && (colour != 3'b110))
+            colour = colour + 1;
+         else
+            colour = 3'b001; 
+      end
+endmodule 
