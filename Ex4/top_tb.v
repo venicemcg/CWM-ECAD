@@ -11,114 +11,94 @@
 
 module top_tb(); 
   
+ // Parameters
   parameter CLK_PERIOD = 10; 
   
-  reg [2:0] STOP_AT = 4; 
-  
-  parameter STOP_AT_4 = 1; 
-  parameter STOP_AT_3 = 2; 
-  parameter DONT_STOP = 3; 
-  
+  // Registers and wires
   reg clk; 
-  reg rst; 
   reg button; 
-  wire [2:0] colour; 
-  reg [2:0] colourPrevState; 
-  reg [2:0] testPhase; 
+  reg rst; 
   reg err; 
+  reg [2:0] localcolour; 
+  wire [2:0] colour; 
+  
+  // Clock generation 
+  initial begin 
+    clk = 1'b0; 
+    forever
+      #(CLK_PERIOD/2) clk=~clk; 
+  end
+  
+  //User logic 
   
   initial begin 
     rst = 1; 
+    button = 0; 
     err = 0; 
-    button - 1; 
-    testPhase = STOP_AT_4; 
-    colourPrevState = 0; 
+    localcolour = 3'b000; 
     
-    #50 
-    if (colour != 'b001) begin 
+    // Checking reset
+    #(CLK_PERIOD)
+    if (colour != 0) begin 
+      $display("Test failed"); 
       err = 1; 
-      $display("***TEST FAILED***"); 
-    end 
+    end
+    #(CLK_PERIOD)
     rst = 0; 
-    #50 
-    if (colour == 'b001) begin 
-      err = 1; 
-      $display("***TEST FAILED***"); 
-    end 
-  end 
-  
-  always @(posedge clk) begin 
-    if (colour == 'b111 || colour == 'b000) begin 
-      err = 1; 
-      $display("***TEST FAILED***"); 
-    end 
+    #(CLK_PERIOD) // button = 0 or 1 should make 000 go to 001 
     
-    if (colour == STOP_AT) begin 
-      button = 0; 
-      #70
-      if (colour != STOP_AT ) begin 
-        err = 1; 
-        $display("***TEST FAILED***"); 
-      end 
+    if (colour != 3'b001) begin 
+      $display("Test failed"); 
+      err = 1; 
+    end
+    
+    forever begin 
       button = 1; 
-      #70
-      if (colour == STOP_AT) begin 
-        err = 1; 
-        $display("***TEST FAILED***"); 
-      end 
-      
-      if (testPhase == STOP_AT_4) begin 
-        STOP_AT = 3; 
-        testPhase = STOP_AT_3; 
-      end else if (testPhase == STOP_AT_3) begin 
-        STOP_AT = 0; 
-        testPhase = DONT_STOP; 
-        
-        #100 
-        rst = 1; 
-        #5
-        if (colour != 1) begin 
+      if (colour != 6 && colour != 7) begin 
+        localcolour = colour; 
+        #(CLK_PERIOD)
+        if (colour != localcolour + 1) begin 
+          $display("test failed");
           err = 1; 
-          $display("***TEST FAILED***");
-        end 
-        #70
-        if (colour != 1) begin 
-          err = 1; 
-          $display("***TEST FAILED***"); 
-        end 
-        rst = 0; 
-        #30 
-        if (colour == 1) begin 
-          err = 1; 
-          $display("***TEST FAILED***"); 
         end
+      end
+      else if (colour == 6) begin 
+        localcolour = colour; 
+        #(CLK_PERIOD)
+        if (colour != 3'b001) begin 
+          $display("test failed"); 
+        end
+      end
+      
+      localcolour = colour; 
+      button = 0; 
+      
+      #(CLK_PERIOD)
+      if (colour != localcolour) begin 
+        $display("test failed"); 
+        err = 1; 
       end
     end
   end
   
-  always @(posedge clk) begin 
-    if (button == 1 && rst = 0 && testPhase != DONT_STOP) begin 
-      if (~(colour == colourPrevState + 1 || (colour == 1 && colourPrevState == 6))) begin 
-        err = 1; 
-        $display("***TEST FAILED***"); 
-      end
-      colourPrevState = colour; 
-    end 
-  end 
+  // Finish test, check for success
   
   initial begin 
-    #1000
-    if (testPhase != DONT_STOP)
-      $display("***TEST FAILED***");
-    else if (err == 0) 
-      $display("***TEST PASSED***"); 
-    $finish; 
-  end 
+    if (err == 1) begin
+      $display("test failed"); 
+    end
+  end
+  initial begin 
+    if (err == 0) begin 
+      $display("test passed"); 
+    end
+  end
   
-  LED top(
-    .clk(clk), 
+  // Instantiate  module 
+  LED top (
     .rst(rst), 
     .button(button), 
+    .clk(clk), 
     .colour(colour)
   ); 
   
