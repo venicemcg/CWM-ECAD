@@ -15,71 +15,67 @@ module top_tb();
   parameter CLK_PERIOD = 10; 
   
 // Define any registers and wires 
-  reg clk; 
-  wire heat; 
-  wire cool; 
-  reg err; 
+ reg clk; 
   reg [4:0] temp; 
+  wire heating;
+  wire cooling; 
+  reg err = 0; 
+  reg up_down = 1; 
+  reg [4:0] state_prev; 
   
-// Clock generation 
   initial begin 
     clk = 1'b0; 
     forever
-      #(CLK_PERIOD/2) clk=~clk; 
-  end 
-// start with temp = 0
+      #(CLK_PERIOD/2) clk=~clk;
+  end
+  
   initial begin 
-    temp = 5'b00000; 
-    // heat = 0 cool = 0 
     forever begin 
-      #10 if ((heat == 1 && temp > 20) || (cool == 1 && temp < 20) || (heat == 1 && cool == 1)) 
-        begin err = 1; 
-        end
-      else
-        begin err = 0; 
-        end 
+      #CLK_PERIOD
+      if (cooling == 1 && heating == 1 ) begin 
+        $display("Test failed - cooling and heating can not be both on"); 
+        err = 1; 
+      end
+    end
+  end
+  
+  // Test by cucling temp between 16 and 24
+  initial begin 
+    temp = 5'b10000; 
+    forever begin 
+      if (temp <= 5'b10000) 
+        up_down = 1; 
+      else if (temp >= 5'b11000)
+        up_down = 0; 
+      else if (up_down == 1) begin 
+        #CLK_PERIOD
+        temp = temp + 5'b00001; 
+      end
+      else if (up_down == 0) begin 
+        #CLK_PERIOD
+        temp = temp - 5'b00001; 
+      end
     end
     
-    // trial a response to a high initial temperature
-    temp = 5'b11111; 
-    forever begin 
-      #10 if ((heat == 1 && temp > 20) || (cool == 1 && temp < 20) || (heat == 1 && cool == 1))
-        begin err = 1; 
-        end
-      else
-        begin err = 0; 
-        end
-    end
+    #CLK_PERIOD
+    temp = dir ? temp + 5'b00001 : temp - 5'b00001; 
+    
+    §§§
   end
   
-  // repeat a traial but starting with a middle temperature
-  temp = 5'b00101 
-  forever begin 
-    #10 if ((heat == 1 && temp > 20) || (cool == 1 && temp < 20) || (heat == 1 && cool == 1)) 
-      begin err = 1; 
-      end 
-    else
-      begin err = 0; 
-      end 
-  end
-  
-  // Finish the test and check for success
+  // Finish test 
   initial begin 
-    #50 
-    if (err == 0) 
-      $display("***TEST PASSED***"); 
+    #200 
+    if (err == 0)
+      $display("test passed"); 
     $finish; 
-    if (err == 1) 
-      $display("***TEST FAILED***"); 
-    $finish 
-  end 
+  end
   
-  // Instantiating ac top 
   ac top(
-    .clk(clk), 
     .temp(temp), 
-    .heat(heat), 
-    .cool(cool)
+    .clk(clk), 
+    .heating(heating), 
+    .cooling(cooling)
   ); 
   
 endmodule 
