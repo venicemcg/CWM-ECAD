@@ -38,6 +38,8 @@ module LED(
             colour = colour; 
          else if ((button == 1) && (colour != 3'b111) && (colour != 3'b110))
             colour = colour + 1;
+         else if (rst)
+            colour <= 3'b001;
          else
             colour = 3'b001; 
       end
