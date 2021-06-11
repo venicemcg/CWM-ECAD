@@ -1,7 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // Test bench for Exercise #6 - RGB Colour Converter
 // Student Name: Venice McGauley 
-// Date: 8th June 2021 
+// Date:
 //
 // Description: A testbench module to test Ex6 - RGB Colour Converter
 // You need to write the whole file
